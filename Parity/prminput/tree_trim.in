@@ -1,0 +1,79 @@
+#  Wildcard the susbsystem name, but the channel designators
+#  below are specific to QwBeamLine subsystems.  They will
+#  be used by all QwBeamLine subsystems, irrespective of the name
+#  If you wanted different behavior for the hall and injector, you'd
+#  need a block for each of them.
+[.*]
+  <QwBCM>
+        hw_sum
+        Device_Error_Code
+        hw_sum_raw
+        num_samples
+
+  <QwBPMStripline>
+       hw_sum
+       Device_Error_Code
+        hw_sum_raw
+        num_samples
+
+  <QwBPMCavity>
+       hw_sum
+       Device_Error_Code
+        hw_sum_raw
+        num_samples
+
+  <QwCombinedBPM>
+       hw_sum
+       Device_Error_Code
+
+  <QwCombinedBCM>
+       hw_sum
+       Device_Error_Code
+
+   <QwEnergyCalculator>
+       hw_sum
+       Device_Error_Code
+
+#  Wildcard for any subsystems with QwIntegratingPMTs, such
+#  as the main detectors and SAMs.
+[.*]
+   <QwIntegrationPMT>
+       hw_sum
+       Device_Error_Code
+       hw_sum_raw
+       num_samples
+
+   <QwCombinedPMT>
+       hw_sum
+       Device_Error_Code
+
+
+[DEVICELIST]
+
+event_number
+actual_pattern_polarity
+delayed_pattern_polarity
+pattern_number
+input_register
+output_register
+ps_counter
+pat_counter
+pat_phase
+.*data.*
+CodaEventNumber
+CodaEventType
+
+#  Wildcarded patterns to match the beamline element
+#  branch names in both the evt and mul tree
+.*bpm.*X
+.*bpm.*Y
+.*bpm.*WS
+.*bcm.*
+.*cav.*x
+.*cav.*y
+.*cav.*q
+
+#  Wildcarded pattern for the SAM element branch names
+.*sam.*
+#EVERYTHING
+.*

@@ -1,0 +1,64 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+#  Explicit instances of executables in the "bin" directory
+qwmockdatagenerator
+qwparity
+qwparity_simple
+qwroot
+
+# Directories
+lib
+*build
+*test*
+output
+Doxygen/html
+
+# output
+*.tar.gz
+*.tar
+*.root
+*.db
+*.png
+*.pdf
+*.ps
+
+#tmp files
+*~
+z_*
+
+# setup files
+SetupFiles/SET_ME_UP.*
+
+# Max burst indices
+Parity/prminput/max_burst_index.*
