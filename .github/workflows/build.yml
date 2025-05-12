@@ -5,7 +5,7 @@ on:
     types: [published]  # Triggered when a release is published
   workflow_dispatch:  # Allows manual trigger
   schedule:
-    - cron: '*/20 * * * *'  # Runs every day at midnight (UTC), this is the nightly trigger
+    - cron: '*/60 * * * *'  # Runs every day at midnight (UTC), this is the nightly trigger
 
 jobs:
   build:
