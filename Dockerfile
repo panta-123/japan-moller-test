@@ -1,50 +1,59 @@
-# japan-MOLLER dockerfile
-# last updated - 04-29-2025 by B. Waidyawansa
-# adapted for AlmaLinux 9 - optimized for size
+# author metadata
+LABEL maintainer="A. Panta <panta@jlab.org>" \
+      org.opencontainers.image.authors="A. Panta, B. Waidyawansa" \
+      org.opencontainers.image.title="JAPAN MOLLER Analysis Framework" \
+      org.opencontainers.image.description="MOLLER JAPAN analysis framework for parity experiments" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="1.0" \
+      org.opencontainers.image.url="https://github.com/yourrepo/japan-moller" \
+      org.opencontainers.image.documentation="https://github.com/yourrepo/japan-moller#readme"
 
-# copy the almalinux 9 base image from docker repo
 FROM almalinux:9 AS build
+
+# Install JLab CA cert
 ADD http://pki.jlab.org/JLabCA.crt /etc/pki/ca-trust/source/anchors/
 RUN update-ca-trust
 
+# Install build tools and dependencies
 RUN dnf update -y && \
     dnf -y install epel-release dnf-plugins-core 'dnf-command(config-manager)' && \
     dnf config-manager --set-enabled crb && \
-    rm -rf /var/cache/yum/*
-
-# update the base image and install the dependencies required to install and compile the analyzer including CERN ROOT
-RUN dnf update -y  && \
-    dnf install -y --setopt=install_weak_deps=False wget cmake gcc gcc-c++ git binutils make \
+    dnf install -y --setopt=install_weak_deps=False \
+    wget cmake gcc gcc-c++ git binutils make \
     openssl-devel libX11-devel libXt-devel libXpm-devel \
     boost-devel mariadb-server mariadb-connector-c-devel \
-    python3 python3-pip tbb-devel libuv-devel giflib-devel root root-python3 root-mathcore root-montecarlo-eg \
+    python3 python3-pip tbb-devel libuv-devel giflib-devel \
+    root root-python3 root-mathcore root-montecarlo-eg \
     root-mathmore root-gui root-hist root-physics root-genvector && \
     dnf clean all && rm -rf /var/cache/yum/*
 
+# Environment variables
+ENV JAPAN_MOLLER_HOME=/opt/japan-moller
+ENV QW_PRMINPUT=$JAPAN_MOLLER_HOME/Parity/prminput
+ENV PATH=$JAPAN_MOLLER_HOME/bin:$PATH
+ENV LD_LIBRARY_PATH=$JAPAN_MOLLER_HOME/lib:$LD_LIBRARY_PATH
 
-# download the analyzer source code from git into the workdir
-#RUN git clone https://github.com/JeffersonLab/japan-MOLLER
+# Copy and build the software in image
 COPY . /japan-MOLLER
-
-# set env variable for the workdir
-ENV JAPAN=/japan-MOLLER
-WORKDIR $JAPAN
-
-RUN mkdir -p $JAPAN/build && \
-    pushd $JAPAN/build && \
-    cmake .. && \
+RUN mkdir -p /japan-MOLLER/build && \
+    cd /japan-MOLLER/build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=$JAPAN_MOLLER_HOME && \
     make -j$(nproc) && \
-    make install && \
-    popd 
+    make install
 
-# Create entry point bash script
-RUN echo '#!/bin/bash'                                   > /usr/local/bin/entrypoint.sh && \
-    echo 'unset OSRELEASE'                                >> /usr/local/bin/entrypoint.sh && \
-    echo 'export PATH=${JAPAN}/bin:${PATH}'               >> /usr/local/bin/entrypoint.sh && \
-    echo 'export QWANALYSIS=${JAPAN}'                     >> /usr/local/bin/entrypoint.sh && \
-    echo 'cd $JAPAN && exec $*'                         >> /usr/local/bin/entrypoint.sh && \
+# Optional: keep build artifacts for debugging
+# Comment this out when we are ready for maturity
+# RUN rm -rf /japan-MOLLER
+
+# Entrypoint: allow override via volumes
+RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
+    echo 'unset OSRELEASE' >> /usr/local/bin/entrypoint.sh && \
+    echo 'export PATH=$JAPAN_MOLLER_HOME/bin:$PATH' >> /usr/local/bin/entrypoint.sh && \
+    echo 'export LD_LIBRARY_PATH=$JAPAN_MOLLER_HOME/lib:$LD_LIBRARY_PATH' >> /usr/local/bin/entrypoint.sh && \
+    echo 'export QW_PRMINPUT=$JAPAN_MOLLER_HOME/Parity/prminput' >> /usr/local/bin/entrypoint.sh && \
+    echo 'exec "$@"' >> /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh
 
-# Set the entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
+WORKDIR /work
+CMD ["/bin/bash"]
