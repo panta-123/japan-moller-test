@@ -1,13 +1,3 @@
-# author metadata
-LABEL maintainer="A. Panta <panta@jlab.org>" \
-      org.opencontainers.image.authors="A. Panta, B. Waidyawansa" \
-      org.opencontainers.image.title="JAPAN MOLLER Analysis Framework" \
-      org.opencontainers.image.description="MOLLER JAPAN analysis framework for parity experiments" \
-      org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.version="1.0" \
-      org.opencontainers.image.url="https://github.com/yourrepo/japan-moller" \
-      org.opencontainers.image.documentation="https://github.com/yourrepo/japan-moller#readme"
-
 FROM almalinux:9 AS build
 
 # Install JLab CA cert
