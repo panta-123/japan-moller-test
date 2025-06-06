@@ -1,0 +1,106 @@
+name: Clang Static Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  clang_check:
+    runs-on: ubuntu-latest # You can also use windows-latest or macos-latest if needed
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Required for advanced Git operations, though not directly used in this version for file filtering
+
+    - name: Install Clang, Clang-Tools, and Clang-Tidy
+      # Installs the necessary Clang and Clang-Tidy packages on Ubuntu.
+      # For specific versions (e.g., Clang 14), you might need 'clang-14 clang-tools-14 clang-tidy-14'.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang clang-tools clang-tidy
+
+    - name: Configure CMake and Generate Compile Commands
+      # Creates a 'build' directory and generates 'compile_commands.json'
+      # This file is crucial for clang-tidy to understand compilation flags and include paths.
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+
+    - name: Run Clang-Tidy and Save Report
+      id: clang_tidy_run # Assigns an ID to this step to reference its outputs later
+      # Runs clang-tidy on C/C++ source and header files.
+      # You can customize the checks using '--checks' or by placing a '.clang-tidy' file
+      # in your repository root.
+      # Example checks: '-*,modernize-use-empty,modernize-use-null,misc-unused-parameters'
+      run: |
+        REPORT_FILE="${{ github.workspace }}/clang-tidy-report.txt"
+        touch "$REPORT_FILE" # Create an empty file to ensure it exists
+
+        # Find C/C++ files (excluding the 'build' directory) and run clang-tidy on them.
+        # '-print0' and 'read -r -d $'\0'' handle filenames with spaces correctly.
+        find . -type f \( -name "*.cpp" -o -name "*.cxx" -o -name "*.cc" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" \) \
+          -not -path "./build/*" -print0 | while IFS= read -r -d $'\0' file; do
+          echo "Analyzing $file..."
+          # Run clang-tidy, redirecting stderr (where clang-tidy often prints warnings/errors) to stdout,
+          # and then using 'tee -a' to append to the report file while also printing to the console.
+          # '-p build/' tells clang-tidy where to find 'compile_commands.json'.
+          clang-tidy "$file" -p build/ --checks='-*,modernize-use-empty,modernize-use-null,misc-unused-parameters,readability-identifier-naming' 2>&1 | tee -a "$REPORT_FILE"
+        done
+
+        # Check if the report file contains any lines indicative of warnings or errors.
+        # This regex looks for lines starting with a relative path, followed by line/column, and then "warning:" or "error:".
+        if grep -q -E "^\./.*:\d+:\d+:\s*(warning|error):" "$REPORT_FILE"; then
+          echo "Clang-Tidy found issues."
+          echo "issues_found=true" >> "$GITHUB_OUTPUT" # Set an output variable to indicate issues were found
+        else
+          echo "No significant clang-tidy issues found."
+          echo "issues_found=false" >> "$GITHUB_OUTPUT"
+        fi
+
+      working-directory: ${{ github.workspace }} # Ensures commands run from the root of the repository
+
+    - name: Comment on Pull Request with Clang-Tidy Issues
+      # This step runs only if the workflow was triggered by a pull request and issues were found.
+      if: github.event_name == 'pull_request' && steps.clang_tidy_run.outputs.issues_found == 'true'
+      uses: actions/github-script@v6 # Action to run arbitrary JavaScript code with GitHub API access
+      with:
+        script: |
+          const fs = require('fs');
+          const reportPath = `${process.env.GITHUB_WORKSPACE}/clang-tidy-report.txt`;
+
+          // Check if the report file exists and is not empty.
+          if (!fs.existsSync(reportPath) || fs.readFileSync(reportPath, 'utf8').trim() === '') {
+              console.log('Clang-tidy report file not found or is empty. Skipping PR comment.');
+              return;
+          }
+
+          const reportContent = fs.readFileSync(reportPath, 'utf8').trim();
+          let commentBody = `### Clang-Tidy Analysis Report\n\n`;
+          commentBody += `\`\`\`\n${reportContent}\n\`\`\`\n`;
+          commentBody += `_Please review the suggested fixes and issues._`;
+
+          // Post a new comment on the pull request.
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number, # The issue_number corresponds to the PR number for PR events
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: commentBody
+          });
+
+          console.log('Clang-Tidy analysis report posted as a PR comment.');
+
+    - name: Fail Job if Clang-Tidy Found Issues
+      # This step will cause the GitHub Actions job to fail if any clang-tidy issues were detected.
+      # Remove this step or modify its 'if' condition if you want the job to pass even with issues.
+      if: steps.clang_tidy_run.outputs.issues_found == 'true'
+      run: |
+        echo "## Clang-Tidy found issues. Please review the PR comment for details and resolve them."
+        exit 1 # Exits with a non-zero status code, failing the job
