@@ -3,10 +3,10 @@ name: Clang Static Analysis
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
   workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
@@ -19,12 +19,16 @@ jobs:
       with:
         fetch-depth: 0 # Required for advanced Git operations, though not directly used in this version for file filtering
 
-    - name: Install Clang, Clang-Tools, and Clang-Tidy
-      # Installs the necessary Clang and Clang-Tidy packages on Ubuntu.
-      # For specific versions (e.g., Clang 14), you might need 'clang-14 clang-tools-14 clang-tidy-14'.
+    - name: Install Clang, Clang-Tools, Clang-Tidy, and Boost
+      # Installs the necessary Clang, Clang-Tidy, and Boost development packages on Ubuntu.
+      # For specific Clang versions (e.g., Clang 14), you might need 'clang-14 clang-tools-14 clang-tidy-14'.
+      # Boost components: libboost-dev is a meta-package, but specific ones are added for clarity.
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang clang-tools clang-tidy
+        sudo apt-get install -y clang clang-tools clang-tidy \
+                                 libboost-dev libboost-program-options-dev \
+                                 libboost-filesystem-dev libboost-system-dev \
+                                 libboost-regex-dev
 
     - name: Configure CMake and Generate Compile Commands
       # Creates a 'build' directory and generates 'compile_commands.json'
