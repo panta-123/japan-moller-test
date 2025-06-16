@@ -22,7 +22,7 @@ ENV JAPAN_MOLLER_HOME=/opt/japan-moller
 ENV QW_PRMINPUT=$JAPAN_MOLLER_HOME/Parity/prminput
 ENV PATH=$JAPAN_MOLLER_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=$JAPAN_MOLLER_HOME/lib:$JAPAN_MOLLER_HOME/lib64:$LD_LIBRARY_PATH
-ENV QWANALYSIS=/japan-MOLLER # This now consistently points to the source directory
+ENV QWANALYSIS=/japan-MOLLER
 
 # Copy and build the software in image
 COPY . ${QWANALYSIS}
@@ -34,7 +34,7 @@ RUN mkdir -p ${QWANALYSIS}/build && \
 
 # Optional: keep build artifacts for debugging
 # Comment this out when we are ready for maturity
-# RUN rm -rf ${QWANALYSIS} # Updated to use QWANALYSIS
+# RUN rm -rf ${QWANALYSIS}/build # Updated to use QWANALYSIS
 
 # Entrypoint: allow override via volumes
 RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
