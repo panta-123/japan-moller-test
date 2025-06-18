@@ -15,6 +15,7 @@ RUN dnf update -y && \
     python3 python3-pip tbb-devel libuv-devel giflib-devel \
     root root-python3 root-mathcore root-montecarlo-eg \
     root-mathmore root-gui root-hist root-physics root-genvector && \
+    python3 -m pip install ipykernel && \
     dnf clean all && rm -rf /var/cache/yum/*
 
 # Environment variables
