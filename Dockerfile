@@ -40,13 +40,5 @@ RUN mkdir -p ${QWANALYSIS}/build && \
 # RUN rm -rf ${QWANALYSIS}/build # Updated to use QWANALYSIS
 
 # Create entry point bash script
-RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
-    echo 'unset OSRELEASE' >> /usr/local/bin/entrypoint.sh && \
-    echo 'exec "$@"' >> /usr/local/bin/entrypoint.sh && \
-    chmod +x /usr/local/bin/entrypoint.sh
+CMD ["tail", "-f", "/dev/null"]
 
-# Set the entrypoint
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-WORKDIR $QWANALYSIS
-
-CMD ["/bin/bash"]
