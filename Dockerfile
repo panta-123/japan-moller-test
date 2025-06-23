@@ -39,7 +39,7 @@ RUN mkdir -p ${QWANALYSIS}/build && \
 # Comment this out when we are ready for maturity
 # RUN rm -rf ${QWANALYSIS}/build # Updated to use QWANALYSIS
 
-RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \Add commentMore actions
+RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
     echo 'unset OSRELEASE' >> /usr/local/bin/entrypoint.sh && \
     echo 'exec "$@"' >> /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh
